@@ -93,7 +93,6 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
 		}
 	}
 
-
 	flag = 1;
 	int k = 0; // счетчик массива lens_of_nums
 	int lens_of_nums[*nums_count]; // массив, содержащий длины каждого числа
@@ -109,7 +108,6 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
 				len_of_num++;
 				flag = 0;
 			}
-			// printf("%c, %d, %d\n", str[i], flag, len_of_num);
 		}
 		
 		if (strchr(operations, str[i]) != NULL && flag == 0)
@@ -122,10 +120,8 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
 		}
 	}
 
-	// lens_of_nums[k] = len_of_num;
-	// print_array(lens_of_nums, *nums_count);
-	// printf("\n");
-
+	lens_of_nums[k] = len_of_num;
+	print_array(lens_of_nums, *nums_count);
 
 	// выделение памяти для матрицы строк
 
@@ -142,8 +138,6 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
             return NULL;
         }
     }
-
-
 
     // заполнение массива чисел
 
@@ -180,6 +174,97 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
 
 }
 
+void long_sum(char* a, char* b) // суммирование длинных чисел (падает с segm на 40 разрядах)
+{
+
+	int length; // длина результата
+
+	int dec, div, new_dec; 
+
+	char *res; // итоговая строка с числом
+
+	int a_len = strlen(a);
+	int b_len = strlen(b);
+
+	// интовские массивы для вычислений (нужно перевести в такие массивы так как на вход - строки)
+	int int_a[a_len]; 
+	int int_b[b_len];
+
+
+	// интовское поразрядное представление чисел
+	for (int i = 0; i < a_len; i++)
+		int_a[i] = a[i] - '0';
+	for (int i = 0; i < b_len; i++)
+		int_b[i] = b[i] - '0';
+
+	// определяем длину массива суммы
+	if (a_len >= b_len)
+    	length = a_len + 1;
+	else
+    	length = b_len + 1;
+
+    // промежуточный интовский массив для хранения результата (для вычислений)
+    int *result = malloc(sizeof(int) * length);
+
+
+    // проставляем разряды нулями
+    for (int i = 0; i < length; i++)
+    	result[i] = 0;
+
+
+    // само сложение
+    for (int i = 0; i < length-1; i++)
+    {
+    	// поразрядное сложение
+    	dec = int_a[a_len - i - 1] + int_b[b_len - i - 1];
+    	if (dec < 10)
+    	{
+    		if (result[i] + dec < 10)
+    			result[i] = dec;
+    		else
+    		{
+    			new_dec = (result[i] + dec) % 10; // целая часть
+     			div = (result[i] + dec) / 10; // дробная часть
+    			result[i + 1] += div;
+    			result[i] = new_dec;   			
+    		}
+    		div = 0;
+    	}
+    	else if (dec >= 10)
+    	{
+    		new_dec = (result[i] + dec) % 10;
+            div = (result[i] + dec) / 10;
+            result[i + 1] += div;
+            result[i] = new_dec;
+    	}
+    }
+
+    // обратный перевод массива result(в нем число в обратном порядке) в строку
+
+    if (result[length-1] == 0)
+    {
+    	int l = length-1;
+    	res = malloc(sizeof(char) * l);
+    	for (int i = 0; i < l; i++)
+    	{
+    		res[i] = result[l-i-1] + '0';
+    	}
+    }
+    else
+    {
+    	
+    	res = malloc(sizeof(char) * length);
+    	for (int i = 0; i < length; i++)
+    	{
+    		res[i] = result[length-i-1] + '0';
+    	}	
+    }
+    free(result);
+
+	printf("%s\n", res);
+}
+
+
 
 
 void shunting_yard(char* str) // алгорит сортировочной станции
@@ -205,8 +290,6 @@ void shunting_yard(char* str) // алгорит сортировочной ст�
 
 }
 
-
-
 int brackets_check(char *str) // проверка правильности проставления скобок, если все верно, посчитать количество скобок
 {
 	printf("str: %s\n", str);
@@ -227,11 +310,6 @@ int brackets_check(char *str) // проверка правильности пр�
 		return INCORRECT_BRACKETS;
 }
 
-
-
-
-
-
 int main(void)
 {
 	int nums_count;
@@ -250,6 +328,13 @@ int main(void)
 	{
 		printf("%s\n", data[i]);
 	}
+
+	printf("----------------\n");
+
+	long_sum(data[0], data[1]);
+	free_matrix_rows(data,nums_count);
+
+
 
 	// shunting_yard(line);
 
