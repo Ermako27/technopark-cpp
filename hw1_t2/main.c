@@ -211,6 +211,47 @@ int* long_sum(int* int_a, int* int_b, int length, int a_len, int b_len) // су�
     return result;
 }
 
+int* long_substraction(int* int_a, int* int_b, int length, int a_len, int b_len) // вычитание
+{
+	int dec, div, new_dec, flag = 1; 
+	int *result = malloc(sizeof(int)*length);
+
+	// проставляем разряды нулями
+    for (int i = 0; i < length; i++)
+    	result[i] = 0;
+
+
+    if ((a_len < b_len) || ((a_len==b_len) && (int_a[0] < int_b[0]))) // случай когда вычитаем из меньшего числа
+    {
+    	int* abs_res = long_substraction(int_b, int_a, length, b_len, a_len);
+    	for (int i = length-1; i >= 0; i--)
+    	{
+    		if (abs_res[i] !=0 && flag == 1)
+    		{
+    			flag = 0;
+    			abs_res[i] = -1*abs_res[i];
+    		}
+    	}
+    	return abs_res;
+    }
+
+    if ((a_len > b_len) || ((a_len==b_len) && (int_a[0] >= int_b[0]))) // случай когда вычитаем из большего числа
+    {
+    	for (int i = 0; i < a_len; i++)
+    	{
+    		if (int_a[i] < int_b[i])
+    		{
+    			result[i] = int_a[i] + 10 - int_b[i];
+    			int_a[i+1] -= 1;
+    		}
+    		else
+    			result[i] = int_a[i] - int_b[i];
+    	}
+    	return result;
+    }
+    
+}
+
 void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 {
 	int length; // длина результата
@@ -258,31 +299,41 @@ void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 	// пусть складываются два числа 123+3
 	// значтит в функцию подаются массивы следующего вида {3, 2, 1, 0} {3, 0, 0, 0} 
 	// остальные операции аналогично
-    result = operation(int_a, int_b, length, a_len, b_len);
-    
+    result = operation(int_a, int_b, length, a_len, b_len); // операция передаваямая через указатель
 
-    // обратный перевод массива result(в нем число в обратном порядке) в строку
-    if (result[length-1] == 0)
+
+    // отсечение лишних нулей для корректного преобразования в массива разрядов в строку
+    int k;
+    int flag = 1;
+    for(int i = length-1; i >= 0; i--)
     {
-    	int l = length-1;
-    	res = malloc(sizeof(char) * l);
-    	for (int i = 0; i < l; i++)
+    	if(result[i] != 0 && flag ==1) // идем с конца так как разряды стоят в обратном порядке
     	{
-    		res[i] = result[l-i-1] + '0';
+    		k = i; // запоминаем где закончились лишние нули
+    		flag = 0;
     	}
     }
-    else
+
+    if (result[k] < 0) // преобразование в строку если значение result < 0
     {
-    	
-    	res = malloc(sizeof(char) * length);
-    	for (int i = 0; i < length; i++)
-    	{
-    		res[i] = result[length-i-1] + '0';
-    	}	
+    	res = malloc(sizeof(char) * (k+2));
+    	res[0] = '-';
+   		for (int i = 0; i < k+1; i++)
+   		{
+    		res[i+1] = abs(result[k-i]) + '0';
+    		printf("res[i]: %c\n", res[i+1]);
+   		}
     }
+
+    else // преобразование если значение result > 0
+    {
+    	res = malloc(sizeof(char) * k);
+    	for (int i = 0; i < k+1; i++)
+    		res[i] = result[k-i] + '0';
+    }
+
     free(result);
 
-    // в итоге получаем строку результата '126'
 	printf("%s\n", res);
 }
 
@@ -414,6 +465,7 @@ int main(void)
 
 	printf("----------------\n");
 
+	// wrapper(data[0], data[1], long_substraction);
 	wrapper(data[0], data[1], long_sum);
 	free_matrix_rows(data,nums_count);
 
