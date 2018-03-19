@@ -172,7 +172,7 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
 }
 
 
-
+// -a+(-b); -a+b; a+(-b); a+b
 int* long_sum(int* int_a, int* int_b, int length, int a_len, int b_len) // суммирование длинных чисел (падает с segm на 40 разрядах)
 {
 	int dec, div, new_dec; 
@@ -211,6 +211,8 @@ int* long_sum(int* int_a, int* int_b, int length, int a_len, int b_len) // су�
     return result;
 }
 
+
+// a-b(a>b;a,b); a-b(a<b;a,b); -a-b(-a,b); 
 int* long_substraction(int* int_a, int* int_b, int length, int a_len, int b_len) // вычитание
 {
 	int dec, div, new_dec, flag = 1; 
@@ -221,8 +223,14 @@ int* long_substraction(int* int_a, int* int_b, int length, int a_len, int b_len)
     	result[i] = 0;
 
 
-    if ((a_len < b_len) || ((a_len==b_len) && (int_a[0] < int_b[0]))) // случай когда вычитаем из меньшего числа
+    // случай, когда на вход подается два числа с унарным минусом -a+(-b) || первое с минусом второе без -a-b -> 
+    // -> выполнить сложение, добавив к результату минус в конце 
+
+// случай когда вычитаем из меньшего числа, a-b; a < b
+    if ((a_len < b_len) || ((a_len==b_len) && (int_a[a_len-1] < int_b[b_len-1]))) 
     {
+    	printf("!\n");
+    	// printf("lasta: %d lastb: %d\n", int_a[a_len-1], int_b[b_len-1]);
     	int* abs_res = long_substraction(int_b, int_a, length, b_len, a_len);
     	for (int i = length-1; i >= 0; i--)
     	{
@@ -235,8 +243,11 @@ int* long_substraction(int* int_a, int* int_b, int length, int a_len, int b_len)
     	return abs_res;
     }
 
-    if ((a_len > b_len) || ((a_len==b_len) && (int_a[0] >= int_b[0]))) // случай когда вычитаем из большего числа
+    if ((a_len > b_len) || ((a_len==b_len) && (int_a[a_len-1] >= int_b[b_len-1]))) // случай когда вычитаем из большего числа, числа без унарного минуса
     {
+    	printf("?\n");
+    	printf("lasta: %d lastb: %d\n", int_a[a_len-1], int_b[b_len-1]);
+    	printf("alen: %d blen: %d\n", a_len,b_len);
     	for (int i = 0; i < a_len; i++)
     	{
     		if (int_a[i] < int_b[i])
@@ -247,6 +258,7 @@ int* long_substraction(int* int_a, int* int_b, int length, int a_len, int b_len)
     		else
     			result[i] = int_a[i] - int_b[i];
     	}
+    	print_array(result,length);
     	return result;
     }
     
@@ -291,19 +303,40 @@ void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 
 	// на данном этапе массивы выглядят как {0, 0, 0, 0} {0, 0, 0 ,0}
 	// заполнение массивов разрядами
-	for (int i = 0; i < a_len; i++)
-		int_a[i] = a[a_len-i-1] - '0';
-	for (int i = 0; i < b_len; i++)
-		int_b[i] = b[b_len-i-1] - '0';
+	if (a[0] != '-')
+	{
+		for (int i = 0; i < a_len; i++)
+			int_a[i] = a[a_len-i-1] - '0';
+	}
+	else // если число отрицательное 
+	{
+		for (int i = 0; i < a_len-1; i++)
+			int_a[i] = a[a_len-i-1] - '0';
+		a_len -= 1; // длина уменьшается так как минус не является цифрой
+		int_a[a_len-1] *= -1; // последний разряд умножается на -1
+	}
 
-	// пусть складываются два числа 123+3
-	// значтит в функцию подаются массивы следующего вида {3, 2, 1, 0} {3, 0, 0, 0} 
-	// остальные операции аналогично
+	if (b[0] != '-')
+	{
+		for (int i = 0; i < b_len; i++)
+			int_b[i] = b[b_len-i-1] - '0';
+	}
+	else
+	{
+		for (int i = 0; i < b_len-1; i++)
+			int_b[i] = b[b_len-i-1] - '0';
+		b_len -= 1;
+		int_b[b_len-1] *= -1;
+	}
+
+	// // пусть складываются два числа 123+3
+	// // значтит в функцию подаются массивы следующего вида {3, 2, 1, 0} {3, 0, 0, 0} 
+	// // остальные операции аналогично
     result = operation(int_a, int_b, length, a_len, b_len); // операция передаваямая через указатель
 
 
-    // отсечение лишних нулей для корректного преобразования в массива разрядов в строку
-    int k;
+ //    // отсечение лишних нулей для корректного преобразования в массива разрядов в строку
+    int k=0;
     int flag = 1;
     for(int i = length-1; i >= 0; i--)
     {
@@ -314,6 +347,7 @@ void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
     	}
     }
 
+    printf("K %d\n", k);
     if (result[k] < 0) // преобразование в строку если значение result < 0
     {
     	res = malloc(sizeof(char) * (k+2));
@@ -327,9 +361,18 @@ void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 
     else // преобразование если значение result > 0
     {
-    	res = malloc(sizeof(char) * k);
-    	for (int i = 0; i < k+1; i++)
-    		res[i] = result[k-i] + '0';
+    	if (k == 0) // если результат вычитание  = 0
+    	{
+    		res = malloc(sizeof(char) * 1);
+    		for (int i = 0; i < k+1; i++)
+    			res[i] = result[k-i] + '0';
+    	}
+    	else
+		{
+		    res = malloc(sizeof(char) * k);
+    		for (int i = 0; i < k+1; i++)
+    			res[i] = result[k-i] + '0';	
+		}
     }
 
     free(result);
@@ -465,8 +508,8 @@ int main(void)
 
 	printf("----------------\n");
 
-	// wrapper(data[0], data[1], long_substraction);
-	wrapper(data[0], data[1], long_sum);
+	wrapper(data[0], data[1], long_substraction);
+	// wrapper(data[0], data[1], long_sum);
 	free_matrix_rows(data,nums_count);
 
 
