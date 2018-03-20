@@ -149,7 +149,7 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
 	{
 		if ((strchr(operands, str[i]) != NULL) || str[i] == '-')
 		{
-			if (flag == 1 && str[i] == '-')
+			if (flag == 1 && str[i] == '-' && strchr(operands, str[i+1]) != NULL)
 			{
 				data[p][j] = str[i];
 				j++;
@@ -504,73 +504,15 @@ char* wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 	return res;
 }
 
-// void long_mult(char *a, char *b)
-// {
-// 	int length; // длина результата
-// 	int dec, div, new_dec; 
-// 	char *res; // итоговая строка с числом
-// 	int a_len = strlen(a);
-// 	int b_len = strlen(b);
-// 	// интовские массивы для вычислений (нужно перевести в такие массивы так как на вход - строки)
-// 	int int_a[a_len]; 
-// 	int int_b[b_len];
-
-// 	// интовское поразрядное представление чисел
-// 	for (int i = 0; i < a_len; i++)
-// 		int_a[i] = a[i] - '0';
-// 	for (int i = 0; i < b_len; i++)
-// 		int_b[i] = b[i] - '0';
-
-// 	// определяем длину массива суммы
-// 	if (a_len >= b_len)
-//     	length = a_len + 1;
-// 	else
-//     	length = b_len + 1;
-
-//     // промежуточный интовский массив для хранения результата (для вычислений)
-//     int *result = malloc(sizeof(int) * length);
-
-//     // проставляем разряды нулями
-//     for (int i = 0; i < length; i++)
-//     	result[i] = 0;
-
-//     for (i = 0; i < b_len; i++)
-//     {
-//         for (int j = 0; j < a_len; j++)
-//         {
-//             decimal = m_int_1[m_count_1 - j - 1] * m_int_2[m_count_2-i - 1];
-//             if (decimal < 10)
-//             {
-//                 if (res[j+i] + decimal < 10)
-//                 {
-//                     res[j+i] += decimal;
-//                 }
-//                 else
-//                 {
-//                     new_dec = (res[j+i] + decimal) % 10;
-//                     div = (res[j+i] + decimal) / 10;
-//                     res[j+i] = new_dec;
-//                     res[j+i+1] += div;  
-//                 }
-//                 div = 0;
-
-//             }
-//             else if (decimal >= 10)
-//             {
-//                 new_dec = (res[j+i] + decimal) % 10;
-//                 div = (res[j+i] + decimal) / 10;
-//                 res[j + i + 1] += div;
-//                 res[j + i] = new_dec;
-//             }
-//         }
-//     }
-// }
-
 
 void shunting_yard(char* str, char **Q_operands) // алгорит сортировочной станции
 {	// Q - числа W - операции
 	Node_t *Q_head = NULL;
 	Node_t *W_head = NULL;
+	char *operation; // операция удаляемая из стека
+	char *res_of_operation; // результат операции
+	char *num1; // числа, выбрасываемые из стека
+	char *num2;
 	char operations[6] = "()+-*/";
 	char operands[10] = "0123456789";
 
@@ -580,7 +522,8 @@ void shunting_yard(char* str, char **Q_operands) // алгорит сортир�
 	int w_index = 0;
 	int q_index = 0;
 
-	int prev_priority;
+	int prev_priority = 0;
+	int current_priority = 0;
 
 	int l = strlen(str)-1;
 	for (int i = 0; i < l; i++) // проходим по всей строке
@@ -593,6 +536,32 @@ void shunting_yard(char* str, char **Q_operands) // алгорит сортир�
 		}
 		if (strchr(operations, str[i]) != NULL) // если знак
 		{
+			// выставление приоритета
+			if (str[i] == '-' || str[i] == '+') 
+			{
+				prev_priority = current_priority;
+				current_priority = 1;
+			}
+			else
+			{
+				prev_priority = current_priority;
+				current_priority = 2;
+			}
+
+			// если приоритет текущей равен приоритету прошлой операции -> вытолкнуть прошлую операцию
+			// и два числа из стека, затем выполнить эту операцию с этими двумя числами
+			// результат операции снова положить в стек
+			if (prev_priority == current_priority)
+			{
+				operation = pop(&W_head);
+				num1 = pop(&Q_head);
+				num2 = pop(&Q_head);
+				if (*operation == '-')
+					res_of_operation = wrapper(num1,num2, long_substraction);
+				if (*operation == '+')
+					res_of_operation = wrapper(num1,num2, long_sum);
+				push(&Q_head, res_of_operation);
+			}
 			if (q_flag == 1) // если до знака была цифра
 			{
 				q_flag = 0;
