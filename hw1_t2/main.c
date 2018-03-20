@@ -121,7 +121,7 @@ char** createNumsArray(char *str, int *nums_count) // создание масс�
 	}
 
 	lens_of_nums[k] = len_of_num;
-	print_array(lens_of_nums, *nums_count);
+	// print_array(lens_of_nums, *nums_count);
 
 	// выделение памяти для матрицы строк
 
@@ -380,13 +380,13 @@ int* long_substraction(int* int_a, int* int_b, int length, int a_len, int b_len)
     			// printf("int_a[i] %d int_b[i] %d result[i] %d\n", int_a[i], int_b[i], result[i]);
     		}
     	}
-    	print_array(result,length);
+    	// print_array(result,length);
     	return result;
     }
     
 }
 
-void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
+char* wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 {
 	int length; // длина результата
 	char *res; // итоговая строка с числом
@@ -501,6 +501,7 @@ void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
     free(result);
 
 	printf("%s\n", res);
+	return res;
 }
 
 // void long_mult(char *a, char *b)
@@ -566,24 +567,64 @@ void wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 // }
 
 
-void shunting_yard(char* str) // алгорит сортировочной станции
-{	
+void shunting_yard(char* str, char **Q_operands) // алгорит сортировочной станции
+{	// Q - числа W - операции
 	Node_t *Q_head = NULL;
 	Node_t *W_head = NULL;
 	char operations[6] = "()+-*/";
 	char operands[10] = "0123456789";
 
-	int l = strlen(str) - 1;
+	int w_flag = 0;
+	int q_flag = 0;
+
+	int w_index = 0;
+	int q_index = 0;
+
+	int prev_priority;
+
+	int l = strlen(str)-1;
 	for (int i = 0; i < l; i++) // проходим по всей строке
 	{
-		if (strchr(operations, str[i]) != NULL)
+		if (strchr(operands, str[i]) != NULL && q_flag == 0) // если число
 		{
-			char *operand = malloc(sizeof(char)*1);
-			*operand = str[i];
-			push(&W_head, operand);
+			push(&Q_head, Q_operands[q_index]); // добавляем в стек число из массива чисел
+			q_index++;
+			q_flag = 1;
+		}
+		if (strchr(operations, str[i]) != NULL) // если знак
+		{
+			if (q_flag == 1) // если до знака была цифра
+			{
+				q_flag = 0;
+				char *operand = malloc(sizeof(char)*1);
+				*operand = str[i];
+				push(&W_head, operand);
+
+			}
+			else // если до знака был знак
+			{
+
+				if (strchr(operands, str[i+1]) != NULL && str[i] != '-') // если после текущего знака не число -> текущий знак не унарный минус -> можно добавить
+				{
+
+					char *operand = malloc(sizeof(char)*1);
+					*operand = str[i];
+					push(&W_head, operand);
+				}
+				else if (strchr(operands, str[i+1]) == NULL)
+				{
+					char *operand = malloc(sizeof(char)*1);
+					*operand = str[i];
+					push(&W_head, operand);
+				}
+
+				q_flag = 0;
+			}
 		}
 	}
 	printStack(W_head);
+	printf("\n");
+	printStack(Q_head);
 
 }
 
@@ -615,14 +656,17 @@ int main(void)
 	int nums_count;
 	char **data;
 	int brackets;
-	char *line;
+	char *str;
 
 	size_t len = 0;
 	printf("Введите выражение а: ");
-	getline(&line, &len, stdin); // ввод строки
+	getline(&str, &len, stdin); // ввод строки
 
-	printf("Ваше выражение: %s\n", line);
-	data = createNumsArray(line, &nums_count);
+	printf("Ваше выражение: %s\n", str);
+	data = createNumsArray(str, &nums_count);
+
+	char* rt= data[0];
+	// printf("CHAAAAR: %s\n", rt);
 
 	for (int i = 0; i < nums_count; i++)
 	{
@@ -632,13 +676,59 @@ int main(void)
 	printf("----------------\n");
 
 	// wrapper(data[0], data[1], long_substraction);
-	wrapper(data[0], data[1], long_sum);
+	// printf("RESULT: %s\n", wrapper(data[0], data[1], long_sum));
+	// free_matrix_rows(data,nums_count);
+
+
+
+	shunting_yard(str, data);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	free_matrix_rows(data,nums_count);
-
-
-
-	// shunting_yard(line);
-
-
 	return 0;
 }
