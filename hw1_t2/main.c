@@ -57,6 +57,19 @@ char* pop(Node_t **head)
 
 
 
+int getSize(const Node_t *head) 
+{
+    int size = 0;
+    while (head) 
+    {
+        size++;
+        head = head->next;
+    }
+    return size;
+}
+
+
+
 void printStack(const Node_t* head) 
 {
     printf("stack >");
@@ -65,6 +78,85 @@ void printStack(const Node_t* head)
         printf("%s ", head->value);
         head = head->next;
     }
+}
+
+char* normalization(char *line) // удаление унарных минусов чтобы удобнее выполнять алгоритм
+{
+	char operands[10] = "0123456789";
+	int l = strlen(line) - 1;
+	printf("first len: %d\n", l);
+	int count = 0;
+	int prev_znak_flag = 1; // 1 - был знак до
+	for (int i = 0; i < l; i++)
+	{
+		if (strchr(operands, line[i]) != NULL)
+		{
+			count += 1;
+		}
+		else
+		{
+			if (line[i] != '-' && line[i] != ' ')
+			{
+				count += 1;
+			}
+			else 
+			{
+				if (i != 0)
+				{
+					// if (strchr(operands, line[i-1]) == NULL && strchr(operands, line[i+1]) == NULL)
+					if (line[i-1] == ')' && line[i+1] == '(')
+						count += 1;
+					if (strchr(operands, line[i-1]) != NULL && strchr(operands, line[i+1]) != NULL)
+						count += 1;
+					if (line[i-1] == ')' && strchr(operands, line[i+1]) != NULL)
+						count += 1;
+				}
+
+			}
+		}
+	}
+	int k = 0;
+	char *normalized = malloc(sizeof(char)*count);
+	for (int i = 0; i < l; i++)
+	{
+		if (strchr(operands, line[i]) != NULL)
+		{
+			normalized[k] = line[i];
+			k += 1;
+		}
+		else
+		{
+			if (line[i] != '-' && line[i] != ' ')
+			{
+				normalized[k] = line[i];
+				k += 1;
+			}
+			else 
+			{
+				if (i != 0)
+				{
+					// if (strchr(operands, line[i-1]) == NULL && strchr(operands, line[i+1]) == NULL)
+					if (line[i-1] == ')' && line[i+1] == '(')
+					{
+						normalized[k] = line[i];
+						k += 1;
+					}
+					if (strchr(operands, line[i-1]) != NULL && strchr(operands, line[i+1]) != NULL)
+					{
+						normalized[k] = line[i];
+						k += 1;
+					}
+					if (line[i-1] == ')' && strchr(operands, line[i+1]) != NULL)
+					{
+						normalized[k] = line[i];
+						k += 1;
+					}
+				}
+
+			}
+		}
+	}
+	return normalized;
 }
 
 
@@ -505,6 +597,41 @@ char* wrapper(char* a, char* b, int* (*operation)(int*, int*, int, int, int))
 }
 
 
+
+// void main_algorithm(Node_t* Q_head, Node_t W int prev_priority, int current_priority, char znak)
+// {
+// 	char *operation; // операция удаляемая из стека
+// 	char *res_of_operation; // результат операции
+// 	char *num1; // числа, выбрасываемые из стека
+// 	char *num2;
+// 		// выставление приоритета
+// 	if (znak == '-' || znak == '+') 
+// 	{
+// 		prev_priority = current_priority;
+// 		current_priority = 1;
+// 	}
+// 	else
+// 	{
+// 		prev_priority = current_priority;
+// 		current_priority = 2;
+// 	}
+
+// 	// если приоритет текущей равен приоритету прошлой операции -> вытолкнуть прошлую операцию
+// 	// и два числа из стека, затем выполнить эту операцию с этими двумя числами
+// 	// результат операции снова положить в стек
+// 	if (prev_priority == current_priority)
+// 	{
+// 		operation = pop(&W_head);
+// 		num1 = pop(&Q_head);
+// 		num2 = pop(&Q_head);
+// 		if (*operation == '-')
+// 			res_of_operation = wrapper(num1,num2, long_substraction);
+// 		if (*operation == '+')
+// 			res_of_operation = wrapper(num1,num2, long_sum);
+// 		push(&Q_head, res_of_operation);
+// 	}
+// }
+
 void shunting_yard(char* str, char **Q_operands) // алгорит сортировочной станции
 {	// Q - числа W - операции
 	Node_t *Q_head = NULL;
@@ -525,9 +652,10 @@ void shunting_yard(char* str, char **Q_operands) // алгорит сортир�
 	int prev_priority = 0;
 	int current_priority = 0;
 
-	int l = strlen(str)-1;
+	int l = strlen(str);
 	for (int i = 0; i < l; i++) // проходим по всей строке
 	{
+		printf("char!: %c\n", str[i]);
 		if (strchr(operands, str[i]) != NULL && q_flag == 0) // если число
 		{
 			push(&Q_head, Q_operands[q_index]); // добавляем в стек число из массива чисел
@@ -536,6 +664,10 @@ void shunting_yard(char* str, char **Q_operands) // алгорит сортир�
 		}
 		if (strchr(operations, str[i]) != NULL) // если знак
 		{
+
+
+
+			/////////////////////////////////////АЛГОРИТМ////////////////////////////////////////////
 			// выставление приоритета
 			if (str[i] == '-' || str[i] == '+') 
 			{
@@ -562,6 +694,12 @@ void shunting_yard(char* str, char **Q_operands) // алгорит сортир�
 					res_of_operation = wrapper(num1,num2, long_sum);
 				push(&Q_head, res_of_operation);
 			}
+
+
+
+
+
+			///////////////////////////////////////////////////////////////////////////////
 			if (q_flag == 1) // если до знака была цифра
 			{
 				q_flag = 0;
@@ -591,6 +729,8 @@ void shunting_yard(char* str, char **Q_operands) // алгорит сортир�
 			}
 		}
 	}
+	// ОСТАНОВИЛСЯ НА ЭТОМ МЕСТЕ: 2+1-3 - СРАБОТАЕТ ТОЛЬКО +, ДОДЕЛАТЬ ВЫПОЛНЕНИЕ ПОСЛЕДНЕЙ ОПЕРАЦИИ И СКОБКИ
+	// ПОСЛЕДНЯЯ НАПИСАННАЯ ФУНКЦИЯ - НОРМАЛИЗАЦИЯ - УДАЛЯЕТ ПРОБЕЛЫ И УНАРНЫЕ МИНУСЫ
 	printStack(W_head);
 	printf("\n");
 	printStack(Q_head);
@@ -626,6 +766,7 @@ int main(void)
 	char **data;
 	int brackets;
 	char *str;
+	char *normalized_string;
 
 	size_t len = 0;
 	printf("Введите выражение а: ");
@@ -634,7 +775,7 @@ int main(void)
 	printf("Ваше выражение: %s\n", str);
 	data = createNumsArray(str, &nums_count);
 
-	char* rt= data[0];
+	// char* rt= data[0];
 	// printf("CHAAAAR: %s\n", rt);
 
 	for (int i = 0; i < nums_count; i++)
@@ -642,56 +783,17 @@ int main(void)
 		printf("%s\n", data[i]);
 	}
 
+	// printf("norm: %s\n", normalized_string);
+	normalized_string = normalization(str);
+	printf("norm: %s\n", normalized_string);
+
 	printf("----------------\n");
 
 	// wrapper(data[0], data[1], long_substraction);
 	// printf("RESULT: %s\n", wrapper(data[0], data[1], long_sum));
 	// free_matrix_rows(data,nums_count);
 
-
-
-	shunting_yard(str, data);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	shunting_yard(normalized_string, data);
 
 
 
